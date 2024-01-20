@@ -6,6 +6,7 @@
 ;;   2015, SKK Development Team
 
 ;; Author: Masatake YAMATO <masata-y@is.aist-nara.ac.jp>
+;; Version: 1.43
 ;; Maintainer: SKK Development Team
 ;; URL: https://github.com/skk-dev/ddskk
 ;; URL: https://github.com/skk-dev/ddskk/blob/master/READMEs/README.ccc.org
