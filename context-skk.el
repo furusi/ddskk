@@ -198,15 +198,16 @@
 ;;
 ;; Advices
 ;;
+(defun context-skk-ctx-switch (orig-fn &rest args)
+  "文脈に応じて自動的に skk の入力モードを latin にする。"
+  (if context-skk-mode
+      (if (context-skk-context-check)
+          (context-skk-insert)
+        (eval `(let ,(context-skk-customize)
+                 (apply orig-fn args))))
+    (apply orig-fn args)))
 (defmacro define-context-skk-advice (target)
-  `(defadvice ,target (around ,(intern (concat (symbol-name target) "-ctx-switch")) activate)
-     "文脈に応じて自動的に skk の入力モードを latin にする。"
-     (if context-skk-mode
-         (if (context-skk-context-check)
-             (context-skk-insert)
-           (eval `(let ,(context-skk-customize)
-                    ad-do-it)))
-       ad-do-it)))
+  `(advice-add ',target :around #'context-skk-ctx-switch))
 
 (define-context-skk-advice skk-insert)
 (define-context-skk-advice skk-jisx0208-latin-insert)
