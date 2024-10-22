@@ -10,6 +10,7 @@
 ;; URL: https://github.com/skk-dev/ddskk
 ;; URL: https://github.com/skk-dev/ddskk/blob/master/READMEs/README.ccc.org
 ;; Keywords: cursor
+;; Version: 1.43
 
 ;; This file is part of Daredevil SKK.
 
