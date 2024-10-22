@@ -66,13 +66,13 @@
     (when var
       (list var))))
 
-(defadvice skk-completion-original (around skk-abbrev-ad activate)
-  (let ((first (ad-get-arg 0))
+(defun skk-abbrev-ad  (orig-fn &rest args)
+  (let ((first (car args))
         c-word)
     (condition-case nil
         ;; not to search by look in ad-do-it.
         (let (skk-use-look)
-          ad-do-it)
+          (apply orig-fn args))
       ;; no word to be completed.
       (error
        (when skk-abbrev-mode
@@ -95,6 +95,7 @@
        (setq skk-completion-stack (cons c-word skk-completion-stack))
        (delete-region skk-henkan-start-point (point))
        (insert c-word)))))
+(advice-add 'skk-completion-original :around #'skk-abbrev-ad)
 
 (provide 'skk-abbrev)
 
