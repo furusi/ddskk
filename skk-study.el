@@ -445,21 +445,23 @@ TO の既存データは破壊される。"
   (and (> nth -1) (setcdr (nthcdr nth list) nil))
   list)
 
-(defadvice skk-kakutei-initialize (before skk-study-ad activate)
-  (let ((kakutei-word (ad-get-arg 0)))
-    (when kakutei-word
-      (ring-insert
-       skk-study-data-ring (cons skk-henkan-key kakutei-word)))))
+(advice-add 'skk-kakutei-initialize :before
+            (lambda (&rest args)
+              (let ((kakutei-word (nth 0 args)))
+                (when kakutei-word
+                  (ring-insert
+                   skk-study-data-ring (cons skk-henkan-key kakutei-word))))))
 
-(defadvice skk-undo-kakutei (after skk-study-ad activate)
-  (let ((last (ring-ref skk-study-data-ring 0))
-        (last2 (ring-ref skk-study-data-ring 1))
-        target)
-    (when (and last last2)
-      (setq target (assoc (car last)
-                          ;; skk-undo-kakutei is called in henkan buffer
-                          (skk-study-get-current-alist))
-            target (delq (assoc last2 (cdr target)) target)))))
+(advice-add 'skk-undo-kakutei :after
+            (lambda (&rest args)
+              (let ((last (ring-ref skk-study-data-ring 0))
+                    (last2 (ring-ref skk-study-data-ring 1))
+                    target)
+                (when (and last last2)
+                  (setq target (assoc (car last)
+                                      ;; skk-undo-kakutei is called in henkan buffer
+                                      (skk-study-get-current-alist))
+                        target (delq (assoc last2 (cdr target)) target))))))
 
 ;; time utilities...
 ;;  from ls-lisp.el.  Welcome!
