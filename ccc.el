@@ -296,9 +296,9 @@ This function is the same as `facemenu-color-equal'"
   (ccc-set-frame-background-color (selected-frame) (ccc-current-background-color)))
 (advice-add 'custom-theme-checkbox-toggle :after #'ccc--ad-custom-theme-checkbox-toggle)
 
-(advice-add 'enable-theme :after (lambda () (ccc-setup-current-colors)))
+(advice-add 'enable-theme :after (lambda (&rest args) (ccc-setup-current-colors)))
 
-(advice-add 'disable-theme :after (lambda ()(ccc-setup-current-colors)))
+(advice-add 'disable-theme :after (lambda (&rest args)(ccc-setup-current-colors)))
 
 (provide 'ccc)
 
