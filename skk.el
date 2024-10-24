@@ -5162,157 +5162,161 @@ FACE $B$O!VA07J?'!WKt$O!VA07J?'(B + $B%9%i%C%7%e(B + $BGX7J?'!W$N7A<0$G;XDj
     (skk-kakutei)))
 
 ;;; cover to original functions.
-(skk-defadvice keyboard-quit (around skk-ad activate preactivate)
-  "$B"'%b!<%I$G$"$l$P!"8uJd$NI=<($r$d$a$F"&%b!<%I$KLa$9(B ($B8+=P$78l$O;D$9(B)$B!#(B
+(skk-defadvice keyboard-quit :around
+  (lambda (orig-fun &rest args)
+    "$B"'%b!<%I$G$"$l$P!"8uJd$NI=<($r$d$a$F"&%b!<%I$KLa$9(B ($B8+=P$78l$O;D$9(B)$B!#(B
 $B"&%b!<%I$G$"$l$P!"8+=P$78l$r:o=|$9$k!#(B
 $B>e5-$N$I$A$i$N%b!<%I$G$b$J$1$l$P(B `keyboard-quit' $B$HF1$8F0:n$r$9$k!#(B"
 
-  ;; Emacs 27 $B$^$G$O(B $BHs(B interactive $B$G$"$C$?$,!"(B
-  ;; Emacs 28 $B$+$i(B WARNING: Adding advice to subr keyboard-quit
-  ;;   without mirroring its interactive spec $B$H$J$C$?$?$a(B interactive $B$H$7$?!#(B
-  ;; SRC/lisp/emacs-lisp/advoce.el $B$N(B @@ Advising interactive subrs: $B$,;29M$K$J$k!#(B
-  (interactive)
+    ;; Emacs 27 $B$^$G$O(B $BHs(B interactive $B$G$"$C$?$,!"(B
+    ;; Emacs 28 $B$+$i(B WARNING: Adding advice to subr keyboard-quit
+    ;;   without mirroring its interactive spec $B$H$J$C$?$?$a(B interactive $B$H$7$?!#(B
+    ;; SRC/lisp/emacs-lisp/advoce.el $B$N(B @@ Advising interactive subrs: $B$,;29M$K$J$k!#(B
+    (interactive)
 
-  (if (not skk-mode)
-      ad-do-it
-    (cond
-     ((eq skk-henkan-mode 'active)
-      (skk-henkan-inactivate))
-     ((eq skk-henkan-mode 'on)
-      (skk-henkan-off-by-quit))
-     (t
-      (if (skk-get-prefix skk-current-rule-tree)
-          (skk-erase-prefix 'clean)
-        ad-do-it)))))
+    (if (not skk-mode)
+        (apply orig-fun args)
+      (cond
+       ((eq skk-henkan-mode 'active)
+        (skk-henkan-inactivate))
+       ((eq skk-henkan-mode 'on)
+        (skk-henkan-off-by-quit))
+       (t
+        (if (skk-get-prefix skk-current-rule-tree)
+            (skk-erase-prefix 'clean)
+          (apply orig-fun args)))))))
 
-(skk-defadvice abort-minibuffers (around skk-ad activate preactivate)
-  "$BF1>e(B"
-  (interactive)
+(skk-defadvice abort-minibuffers :around
+  (lambda (orig-fun &rest args)
+    "$BF1>e(B"
+    (interactive)
 
-  (if (not skk-mode)
-      ad-do-it
-    (cond
-     ((eq skk-henkan-mode 'active)
-      (skk-henkan-inactivate))
-     ((eq skk-henkan-mode 'on)
-      (skk-henkan-off-by-quit))
-     (t
-      (if (skk-get-prefix skk-current-rule-tree)
-          (skk-erase-prefix 'clean)
-        ad-do-it)))))
+    (if (not skk-mode)
+        (apply orig-fun args)
+      (cond
+       ((eq skk-henkan-mode 'active)
+        (skk-henkan-inactivate))
+       ((eq skk-henkan-mode 'on)
+        (skk-henkan-off-by-quit))
+       (t
+        (if (skk-get-prefix skk-current-rule-tree)
+            (skk-erase-prefix 'clean)
+          (apply orig-fun args)))))))
 
-(skk-defadvice abort-recursive-edit (around skk-ad activate preactivate)
-  "$B"'%b!<%I$G$"$l$P!"8uJd$NI=<($r$d$a$F"&%b!<%I$KLa$9(B ($B8+=P$78l$O;D$9(B)$B!#(B
+(skk-defadvice abort-recursive-edit :around
+  (lambda (orig-fun &rest args)
+    "$B"'%b!<%I$G$"$l$P!"8uJd$NI=<($r$d$a$F"&%b!<%I$KLa$9(B ($B8+=P$78l$O;D$9(B)$B!#(B
 $B"&%b!<%I$G$"$l$P!"8+=P$78l$r:o=|$9$k!#(B
 $B>e5-$N$I$A$i$N%b!<%I$G$b$J$1$l$P(B `abort-recursive-edit' $B$HF1$8F0:n$r$9$k!#(B"
-  ;; subr command but no arg.
-  (skk-remove-minibuffer-setup-hook
-   'skk-j-mode-on 'skk-setup-minibuffer 'skk-add-skk-pre-command)
-  (if (not skk-mode)
-      ad-do-it
-    (cond
-     ((eq skk-henkan-mode 'active)
-      (skk-henkan-inactivate))
-     ((eq skk-henkan-mode 'on)
-      (skk-henkan-off-by-quit))
-     (t
-      (if (skk-get-prefix skk-current-rule-tree)
-          (skk-erase-prefix 'clean)
-        ad-do-it)))))
+    ;; subr command but no arg.
+    (skk-remove-minibuffer-setup-hook
+     'skk-j-mode-on 'skk-setup-minibuffer 'skk-add-skk-pre-command)
+    (if (not skk-mode)
+        (apply orig-fun args)
+      (cond
+       ((eq skk-henkan-mode 'active)
+        (skk-henkan-inactivate))
+       ((eq skk-henkan-mode 'on)
+        (skk-henkan-off-by-quit))
+       (t
+        (if (skk-get-prefix skk-current-rule-tree)
+            (skk-erase-prefix 'clean)
+          (apply orig-fun args)))))))
 
 (advice-add 'newline :around
             (lambda (orig-fun &rest args)
-  "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
-  (if (not (or skk-j-mode
-               skk-jisx0201-mode
-               skk-abbrev-mode))
+              "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
+              (if (not (or skk-j-mode
+                           skk-jisx0201-mode
+                           skk-abbrev-mode))
                   (apply orig-fun args)
-    (let (;;(arg (ad-get-arg 0))
-          ;; `skk-kakutei' $B$r<B9T$9$k$H(B `skk-henkan-mode' $B$NCM$,(B
-          ;; $BL5>r7o$K(B nil $B$K$J$k$N$G!"J]B8$7$F$*$/I,MW$,$"$k!#(B
-          (no-newline (and skk-egg-like-newline
-                           skk-henkan-mode))
-          (auto-fill-function (if (called-interactively-p 'interactive)
-                                  auto-fill-function
-                                nil)))
-      ;; fill $B$5$l$F$b(B nil $B$,5"$C$F$/$k(B :-<
-      ;;(if (skk-kakutei)
-      ;;    (setq arg (1- arg)))
-      ;;(if skk-mode
-      ;;    (let ((opos (point)))
-      ;;      ;; skk-kakutei (skk-do-auto-fill) $B$K$h$C$F9T$,@^$jJV$5$l$?$i(B
-      ;;      ;; arg $B$r(B 1 $B$D8:$i$9!#(B
-      ;;      (skk-kakutei)
-      ;;      (if (and (not (= opos (point))) (integerp arg))
-      ;;          (ad-set-arg 0 (1- arg)))))
-      (when skk-mode
-        (skk-kakutei))
-      (undo-boundary)
-      (unless no-newline
+                (let (;;(arg (ad-get-arg 0))
+                      ;; `skk-kakutei' $B$r<B9T$9$k$H(B `skk-henkan-mode' $B$NCM$,(B
+                      ;; $BL5>r7o$K(B nil $B$K$J$k$N$G!"J]B8$7$F$*$/I,MW$,$"$k!#(B
+                      (no-newline (and skk-egg-like-newline
+                                       skk-henkan-mode))
+                      (auto-fill-function (if (called-interactively-p 'interactive)
+                                              auto-fill-function
+                                            nil)))
+                  ;; fill $B$5$l$F$b(B nil $B$,5"$C$F$/$k(B :-<
+                  ;;(if (skk-kakutei)
+                  ;;    (setq arg (1- arg)))
+                  ;;(if skk-mode
+                  ;;    (let ((opos (point)))
+                  ;;      ;; skk-kakutei (skk-do-auto-fill) $B$K$h$C$F9T$,@^$jJV$5$l$?$i(B
+                  ;;      ;; arg $B$r(B 1 $B$D8:$i$9!#(B
+                  ;;      (skk-kakutei)
+                  ;;      (if (and (not (= opos (point))) (integerp arg))
+                  ;;          (ad-set-arg 0 (1- arg)))))
+                  (when skk-mode
+                    (skk-kakutei))
+                  (undo-boundary)
+                  (unless no-newline
                     (apply orig-fun args))))))
 
 (advice-add 'newline-and-indent :around
             (lambda (orig-fun &rest args)
-  "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
-  (if (not (or skk-j-mode
-               skk-jisx0201-mode
-               skk-abbrev-mode))
+              "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
+              (if (not (or skk-j-mode
+                           skk-jisx0201-mode
+                           skk-abbrev-mode))
                   (apply orig-fun args)
-    (let ((no-newline (and skk-egg-like-newline
-                           skk-henkan-mode))
-          (auto-fill-function (if (called-interactively-p 'interactive)
-                                  auto-fill-function
-                                nil)))
-      (when skk-mode
-        (skk-kakutei))
-      (undo-boundary)
-      (unless no-newline
+                (let ((no-newline (and skk-egg-like-newline
+                                       skk-henkan-mode))
+                      (auto-fill-function (if (called-interactively-p 'interactive)
+                                              auto-fill-function
+                                            nil)))
+                  (when skk-mode
+                    (skk-kakutei))
+                  (undo-boundary)
+                  (unless no-newline
                     (apply orig-fun args))))))
 
-(skk-defadvice exit-minibuffer (around skk-ad activate)
-  ;; subr command but no arg.
-  "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
-  (skk-remove-minibuffer-setup-hook
-   'skk-j-mode-on 'skk-setup-minibuffer 'skk-add-skk-pre-command)
-  (if (not (or skk-j-mode
-               skk-jisx0201-mode
-               skk-abbrev-mode))
-      ad-do-it
-    (let ((no-newline (and skk-egg-like-newline
-                           skk-henkan-mode)))
-      (when skk-mode
-        (skk-kakutei))
-      (unless no-newline
-        ad-do-it))))
+(skk-defadvice exit-minibuffer :around
+  (lambda (orig-fun &rest args)
+    ;; subr command but no arg.
+    "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
+    (skk-remove-minibuffer-setup-hook
+     'skk-j-mode-on 'skk-setup-minibuffer 'skk-add-skk-pre-command)
+    (if (not (or skk-j-mode
+                 skk-jisx0201-mode
+                 skk-abbrev-mode))
+        (apply orig-fun args)
+      (let ((no-newline (and skk-egg-like-newline
+                             skk-henkan-mode)))
+        (when skk-mode
+          (skk-kakutei))
+        (unless no-newline
+          (apply orig-fun args))))))
 
 (advice-add 'picture-mode-exit :before
             (lambda (&rest args)
-  "SKK $B$N%P%C%U%!%m!<%+%kJQ?t$rL58z$K$7!"(B`picture-mode-exit' $B$r%3!<%k$9$k!#(B
+              "SKK $B$N%P%C%U%!%m!<%+%kJQ?t$rL58z$K$7!"(B`picture-mode-exit' $B$r%3!<%k$9$k!#(B
 `picture-mode' $B$+$i=P$?$H$-$K$=$N%P%C%U%!$G(B SKK $B$r@5>o$KF0$+$9$?$a$N=hM}!#(B"
-  (when skk-mode
+              (when skk-mode
                 (skk-kill-local-variables))))
 
 (advice-add 'undo :before
             (lambda (&rest args)
-  "SKK $B%b!<%I$,(B on $B$J$i(B `skk-self-insert-non-undo-count' $B$r=i4|2=$9$k!#(B"
-  (when skk-mode
+              "SKK $B%b!<%I$,(B on $B$J$i(B `skk-self-insert-non-undo-count' $B$r=i4|2=$9$k!#(B"
+              (when skk-mode
                 (setq skk-self-insert-non-undo-count 0))))
 
 (advice-add 'next-line :before
             (lambda (&rest args)
-  (when (eq skk-henkan-mode 'active)
+              (when (eq skk-henkan-mode 'active)
                 (skk-kakutei))))
 
 (advice-add 'previous-line :before
             (lambda (&rest args)
-  (when (eq skk-henkan-mode 'active)
+              (when (eq skk-henkan-mode 'active)
                 (skk-kakutei))))
 
 (advice-add 'backward-kill-sentence :before
             (lambda (&rest args)
-  ;; C-x DEL
-  ;; $B$I$N$h$&$JF0:n$r$9$k$Y$-$+L$7hDj(B
-  (when skk-mode
+              ;; C-x DEL
+              ;; $B$I$N$h$&$JF0:n$r$9$k$Y$-$+L$7hDj(B
+              (when skk-mode
                 (skk-kakutei))))
 
 (defmacro skk-wrap-newline-command (cmd)
@@ -5326,11 +5330,11 @@ skk $B$NF0:n$H@09g$5$;$k!#(B
 $BBN$r<B9T$9$k$h$&$K(B CMD $B$r%i%C%W$9$k!#(B"
   `(advice-add ',cmd :around
                (lambda (orig-fun &rest args)
-     (cond (skk-henkan-mode
-            (skk-kakutei)
-            (unless skk-egg-like-newline
+                 (cond (skk-henkan-mode
+                        (skk-kakutei)
+                        (unless skk-egg-like-newline
                           (apply orig-fun args)))
-           (t
+                       (t
                         (apply orig-fun args))))))
 
 (skk-wrap-newline-command comint-send-input)
