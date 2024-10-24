@@ -683,7 +683,7 @@ If the current mode is different from previous, remove it first."
 ;; advices.
 ;;
 
-(defadvice isearch-repeat (after skk-isearch-ad activate compile)
+(defun skk-isearch--ad-isearch-repeat (&rest args)
   "`isearch-message' を適切に設定する。"
   (when skk-isearch-switch
     (unless (string-match (concat "^" (regexp-quote (skk-isearch-mode-string)))
@@ -708,8 +708,9 @@ If the current mode is different from previous, remove it first."
           (setq isearch-cmds (cdr isearch-cmds))
           (isearch-push-state)
           (isearch-update))))))
+(advice-add 'isearch-repeat :after #'skk-isearch--ad-isearch-repeat)
 
-(defadvice isearch-edit-string (before skk-isearch-ad activate compile)
+(defun skk-isearch--ad-isearch-edit-string (&rest args)
   "`isearch-message' を適切に設定する。"
   (when skk-isearch-switch
     (with-current-buffer (get-buffer-create skk-isearch-working-buffer)
@@ -718,8 +719,9 @@ If the current mode is different from previous, remove it first."
     (when (string-match (concat "^" (regexp-quote (skk-isearch-mode-string)))
                         isearch-message)
       (setq isearch-message (substring isearch-message (match-end 0))))))
+(advice-add 'isearch-edit-string :before #'skk-isearch--ad-isearch-edit-string)
 
-(defadvice isearch-search (before skk-isearch-ad activate compile)
+(defun skk-isearch--ad-isearch-search(&rest args)
   "`isearch-message' を適切に設定する。"
   (when skk-isearch-switch
     (unless (or isearch-nonincremental
@@ -730,35 +732,38 @@ If the current mode is different from previous, remove it first."
             (concat
              (skk-isearch-mode-string)
              (mapconcat 'isearch-text-char-description isearch-string ""))))))
+(advice-add 'isearch-search :before #'skk-isearch--ad-isearch-search)
 
 ;;; This advice will be enabled before skk-isearch is loaded.
 ;;;###autoload
 (defconst skk-isearch-really-early-advice
   (lambda ()
-    (defadvice isearch-message-prefix (around skk-isearch-ad activate)
-      (let ((current-input-method
-             (unless (and (boundp 'skk-isearch-switch)
-                          skk-isearch-switch)
-               current-input-method)))
-        ad-do-it))
-    (defadvice isearch-toggle-input-method (around skk-isearch-ad activate)
-      ;; Needed for calling skk-isearch via isearch-x.
-      (cond ((string-match "^japanese-skk"
-                           (format "%s" default-input-method))
-             (let ((skk-isearch-initial-mode-when-skk-mode-disabled
-                    'latin))
-               (skk-isearch-mode-setup)
-               (skk-isearch-skk-mode)))
-            ((null default-input-method)
-             ad-do-it
-             (when (string-match "^japanese-skk"
-                                 (format "%s" default-input-method))
-               (let ((skk-isearch-initial-mode-when-skk-mode-disabled
-                      'latin))
-                 (skk-isearch-mode-setup))
-               (deactivate-input-method)))
-            (t
-             ad-do-it)))))
+    (advice-add 'isearch-message-prefix :around
+                (lambda (orig-fun &rest args)
+                  (let ((current-input-method
+                         (unless (and (boundp 'skk-isearch-switch)
+                                      skk-isearch-switch)
+                           current-input-method)))
+                    (apply orig-fun args))))
+    (advice-add 'isearch-toggle-input-method :around
+                (lambda (orig-fun &rest args)
+                  ;; Needed for calling skk-isearch via isearch-x.
+                  (cond ((string-match "^japanese-skk"
+                                       (format "%s" default-input-method))
+                         (let ((skk-isearch-initial-mode-when-skk-mode-disabled
+                                'latin))
+                           (skk-isearch-mode-setup)
+                           (skk-isearch-skk-mode)))
+                        ((null default-input-method)
+                         (apply orig-fun args)
+                         (when (string-match "^japanese-skk"
+                                             (format "%s" default-input-method))
+                           (let ((skk-isearch-initial-mode-when-skk-mode-disabled
+                                  'latin))
+                             (skk-isearch-mode-setup))
+                           (deactivate-input-method)))
+                        (t
+                         (apply orig-fun args)))))))
 
 ;;;###autoload
 (define-key isearch-mode-map [(control \\)] 'isearch-toggle-input-method)
