@@ -155,15 +155,17 @@
         (t
          (skk-sticky-set-okuri-mark))))
 
-(defadvice skk-kakutei (after skk-sticky-ad activate)
-  "`skk-sticky-okuri-flag' をクリアする。"
-  (setq skk-sticky-okuri-flag nil))
+(advice-add 'skk-kakutei :after
+            (lambda (&rest args)
+              "`skk-sticky-okuri-flag' をクリアする。"
+              (setq skk-sticky-okuri-flag nil)))
 
-(defadvice keyboard-quit (after skk-sticky-ad activate)
-  "`skk-sticky-okuri-flag' をクリアする。"
-  (setq skk-sticky-okuri-flag nil))
+(advice-add 'keyboard-quit :after
+            (lambda (&rest args)
+              "`skk-sticky-okuri-flag' をクリアする。"
+              (setq skk-sticky-okuri-flag nil)))
 
-(defadvice skk-insert (before skk-sticky-ad activate)
+(defun skk-sticky--ad-skk-insert (&rest args)
   "`*' の直後であれば入力を大文字に変換する。"
   (when (and skk-sticky-okuri-flag
              (skk-sticky-looking-back-okuri-mark)
@@ -172,12 +174,14 @@
       (set 'last-command-event (if pair
                                    (car pair)
                                  (upcase last-command-event))))))
+(advice-add 'skk-insert :before #'skk-sticky--ad-skk-insert)
 
-(defadvice skk-set-henkan-point (before skk-sticky-ad activate)
+(defun skk-sticky--ad-skk-set-henkan-point (&rest args)
   "`point' 直前の `*' を消す。"
   (when (and skk-sticky-okuri-flag
              (skk-sticky-looking-back-okuri-mark))
     (delete-backward-char 1)))
+(advice-add 'skk-set-henkan-point :before #'skk-sticky--ad-skk-set-henkan-point)
 
 ;; `skk-kana-input' は通常 `cancel-undo-boundary' を呼ぶが、
 ;; `skk-sticky-key' の2度打ちの際に本来あるべき boundary (C-k の後など)
@@ -207,23 +211,24 @@
          (memq char skk-sticky-key)
          (memq next skk-sticky-key))))
 
-(defadvice skk-insert (around skk-sticky-ad-double activate)
+(defun skk-insert--ad-skk-sticky-double (orig-fun &rest args)
   "同時打鍵を検出して処理する。"
   (cond ((not (consp skk-sticky-key))
-         ad-do-it)
+         (apply orig-fun args))
         ((not (memq last-command-event skk-sticky-key))
-         ad-do-it)
+         (apply orig-fun args))
         ((sit-for skk-sticky-double-interval t)
          ;; No input in the interval.
-         ad-do-it)
+         (apply orig-fun args))
         (t
          ;; Some key's pressed.
          (let ((next-event (read-event)))
            (if (skk-sticky-double-p this-command
                                     (aref (skk-event-key next-event) 0))
                (skk-sticky-set-henkan-point)
-             ad-do-it
+             (apply orig-fun args)
              (skk-unread-event next-event))))))
+(advice-add 'skk-insert :around #'skk-insert--ad-skk-sticky-double)
 
 (provide 'skk-sticky)
 
