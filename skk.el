@@ -5220,12 +5220,13 @@ FACE $B$O!VA07J?'!WKt$O!VA07J?'(B + $B%9%i%C%7%e(B + $BGX7J?'!W$N7A<0$G;XDj
           (skk-erase-prefix 'clean)
         ad-do-it)))))
 
-(defadvice newline (around skk-ad activate)
+(advice-add 'newline :around
+            (lambda (orig-fun &rest args)
   "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
   (if (not (or skk-j-mode
                skk-jisx0201-mode
                skk-abbrev-mode))
-      ad-do-it
+                  (apply orig-fun args)
     (let (;;(arg (ad-get-arg 0))
           ;; `skk-kakutei' $B$r<B9T$9$k$H(B `skk-henkan-mode' $B$NCM$,(B
           ;; $BL5>r7o$K(B nil $B$K$J$k$N$G!"J]B8$7$F$*$/I,MW$,$"$k!#(B
@@ -5248,14 +5249,15 @@ FACE $B$O!VA07J?'!WKt$O!VA07J?'(B + $B%9%i%C%7%e(B + $BGX7J?'!W$N7A<0$G;XDj
         (skk-kakutei))
       (undo-boundary)
       (unless no-newline
-        ad-do-it))))
+                    (apply orig-fun args))))))
 
-(defadvice newline-and-indent (around skk-ad activate)
+(advice-add 'newline-and-indent :around
+            (lambda (orig-fun &rest args)
   "`skk-egg-like-newline' $B$,(B non-nil $B$G$"$l$P!"3NDj$N$_9T$$!"2~9T$7$J$$!#(B"
   (if (not (or skk-j-mode
                skk-jisx0201-mode
                skk-abbrev-mode))
-      ad-do-it
+                  (apply orig-fun args)
     (let ((no-newline (and skk-egg-like-newline
                            skk-henkan-mode))
           (auto-fill-function (if (called-interactively-p 'interactive)
@@ -5265,7 +5267,7 @@ FACE $B$O!VA07J?'!WKt$O!VA07J?'(B + $B%9%i%C%7%e(B + $BGX7J?'!W$N7A<0$G;XDj
         (skk-kakutei))
       (undo-boundary)
       (unless no-newline
-        ad-do-it))))
+                    (apply orig-fun args))))))
 
 (skk-defadvice exit-minibuffer (around skk-ad activate)
   ;; subr command but no arg.
@@ -5283,30 +5285,35 @@ FACE $B$O!VA07J?'!WKt$O!VA07J?'(B + $B%9%i%C%7%e(B + $BGX7J?'!W$N7A<0$G;XDj
       (unless no-newline
         ad-do-it))))
 
-(defadvice picture-mode-exit (before skk-ad activate)
+(advice-add 'picture-mode-exit :before
+            (lambda (&rest args)
   "SKK $B$N%P%C%U%!%m!<%+%kJQ?t$rL58z$K$7!"(B`picture-mode-exit' $B$r%3!<%k$9$k!#(B
 `picture-mode' $B$+$i=P$?$H$-$K$=$N%P%C%U%!$G(B SKK $B$r@5>o$KF0$+$9$?$a$N=hM}!#(B"
   (when skk-mode
-    (skk-kill-local-variables)))
+                (skk-kill-local-variables))))
 
-(defadvice undo (before skk-ad activate)
+(advice-add 'undo :before
+            (lambda (&rest args)
   "SKK $B%b!<%I$,(B on $B$J$i(B `skk-self-insert-non-undo-count' $B$r=i4|2=$9$k!#(B"
   (when skk-mode
-    (setq skk-self-insert-non-undo-count 0)))
+                (setq skk-self-insert-non-undo-count 0))))
 
-(defadvice next-line (before skk-ad activate)
+(advice-add 'next-line :before
+            (lambda (&rest args)
   (when (eq skk-henkan-mode 'active)
-    (skk-kakutei)))
+                (skk-kakutei))))
 
-(defadvice previous-line (before skk-ad activate)
+(advice-add 'previous-line :before
+            (lambda (&rest args)
   (when (eq skk-henkan-mode 'active)
-    (skk-kakutei)))
+                (skk-kakutei))))
 
-(defadvice backward-kill-sentence (before skk-ad activate)
+(advice-add 'backward-kill-sentence :before
+            (lambda (&rest args)
   ;; C-x DEL
   ;; $B$I$N$h$&$JF0:n$r$9$k$Y$-$+L$7hDj(B
   (when skk-mode
-    (skk-kakutei)))
+                (skk-kakutei))))
 
 (defmacro skk-wrap-newline-command (cmd)
   "[return]$B%-!<$K3d$jEv$F$i$l$F$$$k$G$"$m$&%3%^%s%I(B (CMD) $B$r%i%C%W$7$F!"(B
@@ -5317,13 +5324,14 @@ skk $B$NF0:n$H@09g$5$;$k!#(B
 
 $BK\%^%/%m$rMQ$$$k$H!"JQ49$r3NDj$7$F$+$i(B (`skk-kakutei' $B$r<B9T$7$F$+$i(B) CMD $BK\(B
 $BBN$r<B9T$9$k$h$&$K(B CMD $B$r%i%C%W$9$k!#(B"
-  `(defadvice ,cmd (around skk-ad activate compile)
+  `(advice-add ',cmd :around
+               (lambda (orig-fun &rest args)
      (cond (skk-henkan-mode
             (skk-kakutei)
             (unless skk-egg-like-newline
-              ad-do-it))
+                          (apply orig-fun args)))
            (t
-            ad-do-it))))
+                        (apply orig-fun args))))))
 
 (skk-wrap-newline-command comint-send-input)
 (skk-wrap-newline-command ielm-return)
