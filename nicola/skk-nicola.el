@@ -1027,21 +1027,24 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
 
 ;; Pieces of Advice.
 
-(defadvice skk-kanagaki-initialize (after skk-nicols-setup activate)
+(advice-add 'skk-kanagaki-initialize :after
+            (lambda (&rest args)
   ;; M-x skk-restart 対策として
   (add-hook 'skk-mode-hook 'skk-nicola-setup)
-  (add-hook 'skk-mode-hook 'skk-nicola-setup-modeline))
+              (add-hook 'skk-mode-hook 'skk-nicola-setup-modeline)))
 
-(defadvice skk-insert (before skk-nicola-update-flag activate)
+(advice-add 'skk-insert :before
+            (lambda (&rest args)
   "送り待ち状態を管理する。"
   (when (or (and (markerp skk-nicola-okuri-flag)
                  (<= (point)
                      (marker-position
                       skk-nicola-okuri-flag)))
             (not (eq skk-henkan-mode 'on)))
-    (setq skk-nicola-okuri-flag nil)))
+                (setq skk-nicola-okuri-flag nil))))
 
-(defadvice skk-kakutei (before skk-nicola-update-flag activate)
+(advice-add 'skk-kakutei :before
+            (lambda (&rest args)
   "送り待ち状態を管理する。"
   (when (and skk-j-mode
              (eq skk-henkan-mode 'on)
@@ -1052,18 +1055,20 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
      (when (eq ?* (following-char))
        (delete-char 1))))
   ;;
-  (setq skk-nicola-okuri-flag nil))
+              (setq skk-nicola-okuri-flag nil)))
 
-(defadvice skk-previous-candidate (before skk-nicola-update-flag activate)
+(advice-add 'skk-previous-candidate :before
+            (lambda (&rest args)
   "送り待ち状態を管理する。"
   (when (or (and (markerp skk-nicola-okuri-flag)
                  (<= (point)
                      (marker-position
                       skk-nicola-okuri-flag)))
             (not (eq skk-henkan-mode 'on)))
-    (setq skk-nicola-okuri-flag nil)))
+                (setq skk-nicola-okuri-flag nil))))
 
-(defadvice skk-insert (around skk-nicola-workaround activate)
+(advice-add 'skk-insert :around
+            (lambda (orig-fun &rest args)
   ;;
   (let* ((list (symbol-value
                 (intern (format "skk-%s-plain-rule-list"
@@ -1084,7 +1089,7 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
        ((not (eq skk-henkan-mode 'active))
         (setq marker skk-henkan-start-point)
         (skk-kakutei)
-        ad-do-it
+                    (apply orig-fun args)
         (unless (or (string= (char-to-string (char-before))
                              (cadr cell1))
                     (string= (char-to-string (char-before))
@@ -1094,21 +1099,23 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
            (skk-set-henkan-point-subr))))
        (t
         (skk-kakutei)
-        ad-do-it)))
+                    (apply orig-fun args))))
      (t
-      ad-do-it))))
+                  (apply orig-fun args))))))
 
-(defadvice skk-isearch-setup-keymap (before skk-nicola-workaround activate)
+(advice-add 'skk-isearch-setup-keymap :before
+            (lambda (&rest args)
   "親指キーでサーチが終了してしまわないようにする。"
   (let ((keys (append skk-nicola-lshift-keys
                       skk-nicola-rshift-keys)))
     (while keys
-      (define-key (ad-get-arg 0)
+                  (define-key (nth 0 args)
         (car keys)
         'skk-isearch-wrapper)
-      (setq keys (cdr keys)))))
+                  (setq keys (cdr keys))))))
 
-(defadvice isearch-char-to-string (around skk-nicola-workaround activate)
+(advice-add 'isearch-char-to-string :around
+            (lambda (orig-fun &rest args)
   "エラーが出ると検索が中断して使い辛いので、黙らせる。"
   (cond ((and skk-use-kana-keyboard
               (featurep 'skk-isearch)
@@ -1117,9 +1124,9 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
                    skk-isearch-working-buffer)
                 skk-mode))
          (ignore-errors
-           ad-do-it))
+                       (apply orig-fun args)))
         (t
-         ad-do-it)))
+                     (apply orig-fun args)))))
 
 (put 'skk-nicola-insert 'isearch-command t)
 (put 'skk-nicola-self-insert-lshift 'isearch-command t)
