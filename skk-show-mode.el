@@ -35,13 +35,13 @@
 
 (require 'skk-emacs)
 
-(defun skk-mode-hide-ad ()
+(defun skk-mode-hide-ad (&rest args)
   (setq skk-show-mode-show nil))
 
 (advice-add 'skk-isearch-set-initial-mode :before #'skk-mode-hide-ad)
 (advice-add 'skk-isearch-initialize-working-buffer :before #'skk-mode-hide-ad)
 
-(defun skk-show-mode-ad ()
+(defun skk-show-mode-ad (&rest args)
   "かなモードやアスキーモードへ切り替わったときに skk-*-mode-string を
 tooltip / inline 表示する."
   (when (and skk-show-mode-invoked
