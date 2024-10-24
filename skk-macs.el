@@ -55,11 +55,11 @@ doesn't give arguments of `interactive'. See `interactive' for details."
       ;; check if advice definition has a interactive call or not.
       (setq interactive
             (cond
-             ((and (stringp (nth 1 everything-else)) ; have document
-                   (eq 'interactive (car-safe (nth 2 everything-else))))
-              (nth 2 everything-else))
-             ((eq 'interactive (car-safe (nth 1 everything-else)))
-              (nth 1 everything-else))))
+             ((and (stringp (nth 2 (nth 1 everything-else))) ; have document
+                   (eq 'interactive (car-safe (nth 3 (nth 1 everything-else)))))
+              (nth 3 (nth 1 everything-else)))
+             ((eq 'interactive (car-safe (nth 2 (nth 1 everything-else))))
+              (nth 2 everything-else))))
       (cond
        ((and (commandp origfunc)
              (not interactive))
@@ -70,13 +70,13 @@ doesn't give arguments of `interactive'. See `interactive' for details."
          function))
        ((and (not (commandp origfunc))
              interactive)
-        (setq everything-else (delq interactive everything-else))
+        (setq everything-else (delete interactive everything-else))
         (message
          "\
 *** WARNING: Deleted interactive call from %s advice\
  as %s is not a subr command ***"
          function function))))
-    `(defadvice ,function ,@everything-else)))
+    `(advice-add ',function ,@everything-else)))
 
 ;;;###autoload
 (put 'skk-defadvice 'lisp-indent-function 'defun)
