@@ -188,7 +188,7 @@ This function is the same as `facemenu-color-equal'"
                    ccc-buffer-local-cursor-color
                  (ccc-frame-cursor-color))))
     (when (and (stringp color)
-               (x-color-defined-p color)
+               (color-defined-p color)
                (not (ccc-color-equal color (ccc-current-cursor-color))))
       (set-cursor-color color))))
 
@@ -220,7 +220,7 @@ This function is the same as `facemenu-color-equal'"
                  (ccc-frame-foreground-color))))
     (when (and window-system
                (stringp color)
-               (x-color-defined-p color)
+               (color-defined-p color)
                (not (ccc-color-equal color (ccc-current-foreground-color))))
       (set-foreground-color color))))
 
@@ -252,7 +252,7 @@ This function is the same as `facemenu-color-equal'"
                  (ccc-frame-background-color))))
     (when (and window-system
                (stringp color)
-               (x-color-defined-p color)
+               (color-defined-p color)
                (not (ccc-color-equal color (ccc-current-background-color))))
       (set-background-color color))))
 
@@ -271,34 +271,34 @@ This function is the same as `facemenu-color-equal'"
   (ccc-set-frame-background-color (selected-frame) (ccc-current-background-color)))
 
 ;; Advices.
-(defadvice modify-frame-parameters (after ccc-ad activate)
-  (when (and (assq 'cursor-color (ad-get-arg 1))
+(defun ccc--ad-modify-frame-parameters (&rest args)
+  (when (and (assq 'cursor-color (nth 1 args))
              (null ccc-buffer-local-cursor-color))
-    (ccc-set-frame-cursor-color (ad-get-arg 0)
-                                (cdr (assq 'cursor-color (ad-get-arg 1)))))
-  (when (and (assq 'foreground-color (ad-get-arg 1))
+    (ccc-set-frame-cursor-color (nth 0 args)
+                                (cdr (assq 'cursor-color (nth 1 args)))))
+  (when (and (assq 'foreground-color (nth 1 args))
              (null ccc-buffer-local-foreground-color))
-    (ccc-set-frame-foreground-color (ad-get-arg 0)
-                                    (cdr (assq 'foreground-color (ad-get-arg 1)))))
-  (when (and (assq 'background-color (ad-get-arg 1))
+    (ccc-set-frame-foreground-color (nth 0 args)
+                                    (cdr (assq 'foreground-color (nth 1 args)))))
+  (when (and (assq 'background-color (nth 1 args))
              (null ccc-buffer-local-background-color))
-    (ccc-set-frame-background-color (ad-get-arg 0)
+    (ccc-set-frame-background-color (nth 0 args)
                                     (cdr (assq 'background-color
-                                               (ad-get-arg 1))))))
+                                               (nth 1 args))))))
+(advice-add 'modify-frame-parameters :after #'ccc--ad-modify-frame-parameters)
 
-(defadvice custom-theme-checkbox-toggle (after ccc-ad activate)
+(defun ccc--ad-custom-theme-checkbox-toggle (&rest args)
   (setq ccc-default-cursor-color (ccc-current-cursor-color)
         ccc-default-foreground-color (ccc-current-foreground-color)
         ccc-default-background-color (ccc-current-background-color))
   (ccc-set-frame-cursor-color (selected-frame) (ccc-current-cursor-color))
   (ccc-set-frame-foreground-color (selected-frame) (ccc-current-foreground-color))
   (ccc-set-frame-background-color (selected-frame) (ccc-current-background-color)))
+(advice-add 'custom-theme-checkbox-toggle :after #'ccc--ad-custom-theme-checkbox-toggle)
 
-(defadvice enable-theme (after ccc-ad activate)
-  (ccc-setup-current-colors))
+(advice-add 'enable-theme :after (lambda () (ccc-setup-current-colors)))
 
-(defadvice disable-theme (after ccc-ad activate)
-  (ccc-setup-current-colors))
+(advice-add 'disable-theme :after (lambda ()(ccc-setup-current-colors)))
 
 (provide 'ccc)
 
