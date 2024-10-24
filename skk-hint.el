@@ -61,11 +61,11 @@
 
 (require 'skk)
 
-(defadvice skk-search (around skk-hint-ad activate)
+(defun skk-hint--ad-skk-search (orig-fn &rest args)
   ;; skk-current-search-prog-list の要素になっているプログラムを評価して、
   ;; skk-henkan-key をキーにして検索を行う。
   (if (null skk-hint-henkan-hint)
-      ad-do-it
+      (apply orig-fn args)
     (let (l kouho hint)
       (while (and (null l) skk-current-search-prog-list)
         (setq l (eval (car skk-current-search-prog-list)))
@@ -76,7 +76,8 @@
         (setq kouho (skk-nunion kouho l))
         (setq l (skk-hint-limit kouho hint))
         (setq skk-current-search-prog-list (cdr skk-current-search-prog-list)))
-      (setq ad-return-value l))))
+      l)))
+(advice-add 'skk-search :around #'skk-hint--ad-skk-search)
 
 (defun skk-hint-setup-hint ()
   (cond ((eq skk-hint-state 'kana)
@@ -107,7 +108,7 @@
                     "skk-hint-setup-hint")))
   (setq skk-hint-inhibit-kakutei nil))
 
-(defadvice skk-insert (around skk-hint-ad activate)
+(defun skk-hint--ad-skk-insert (orig-fn &rest args)
   (cond ((and skk-henkan-mode
               (eq last-command-event skk-hint-start-char)
               (not skk-hint-state))
@@ -152,39 +153,47 @@
           (setq skk-henkan-count -1)
           (setq skk-henkan-list nil)
           (skk-start-henkan arg)))
-        (t ad-do-it)))
+        (t (apply orig-fn args))))
+(advice-add 'skk-insert :around #'skk-hint--ad-skk-insert)
 
-(defadvice keyboard-quit (before skk-hint-ad activate)
-  (setq skk-hint-inhibit-kakutei nil))
+(advice-add 'keyboard-quit
+            :before
+            (lambda (&rest args)
+              (setq skk-hint-inhibit-kakutei nil)))
 
-(defadvice abort-recursive-edit (before skk-hint-ad activate)
-  (setq skk-hint-inhibit-kakutei nil))
+(advice-add 'abort-recursive-edit :before
+            (lambda (&rest args)
+              (setq skk-hint-inhibit-kakutei nil)))
 
-(defadvice skk-previous-candidate (before skk-hint-ad activate)
-  (when (and (eq skk-henkan-mode 'active)
-             (not (string= skk-henkan-key ""))
-             (zerop skk-henkan-count))
-    (setq skk-hint-henkan-hint nil
-          skk-hint-state nil))
-  (setq skk-hint-inhibit-kakutei nil))
+(advice-add 'skk-previous-candidate :before
+            (lambda (&rest args)
+              (when (and (eq skk-henkan-mode 'active)
+                         (not (string= skk-henkan-key ""))
+                         (zerop skk-henkan-count))
+                (setq skk-hint-henkan-hint nil
+                      skk-hint-state nil))
+              (setq skk-hint-inhibit-kakutei nil)))
 
-(defadvice skk-kakutei (around skk-hint-ad activate)
-  (unless skk-hint-inhibit-kakutei
-    ad-do-it))
+(advice-add 'skk-kakutei :around
+            (lambda (orig-fn &rest args)
+              (unless skk-hint-inhibit-kakutei
+                (apply orig-fn args))))
 
-(defadvice skk-kakutei-initialize (after skk-hint-ad activate)
-  (setq skk-hint-henkan-hint nil
-        skk-hint-start-point nil
-        skk-hint-state nil
-        skk-hint-inhibit-dcomp nil
-        skk-hint-inhibit-kakutei nil))
+(advice-add 'skk-kakutei-initialize :after
+            (lambda (&rest args)
+              (setq skk-hint-henkan-hint nil
+                    skk-hint-start-point nil
+                    skk-hint-state nil
+                    skk-hint-inhibit-dcomp nil
+                    skk-hint-inhibit-kakutei nil)))
 
-(defadvice skk-delete-backward-char (before skk-hint-ad activate)
-  (when (and (markerp skk-hint-start-point)
-             (or (eq (1+ skk-hint-start-point) (point))
-                 (eq skk-hint-start-point (point))))
-    (setq skk-hint-state nil
-          skk-hint-inhibit-kakutei nil)))
+(advice-add 'skk-delete-backward-char :before
+            (lambda (&rest args)
+              (when (and (markerp skk-hint-start-point)
+                         (or (eq (1+ skk-hint-start-point) (point))
+                             (eq skk-hint-start-point (point))))
+                (setq skk-hint-state nil
+                      skk-hint-inhibit-kakutei nil))))
 
 (defun skk-hint-member (char kouho)
   ;; 文字列のリスト KOUHO の中に文字 CHAR を含むものがあれば、その文字列を返す
