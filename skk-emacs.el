@@ -729,8 +729,9 @@ TEXT には `skk-tooltip-face' が適用される。"
 
 ;; advices.
 
-(defadvice tooltip-hide (after ccc-ad activate)
-  (ccc-update-buffer-local-frame-params))
+(advice-add 'tooltip-hide :after
+            (lambda (&rest args)
+              (ccc-update-buffer-local-frame-params)))
 
 
 (provide 'skk-emacs)
