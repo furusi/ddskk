@@ -1029,103 +1029,103 @@ ARG を与えられた場合はその数だけ文字列を連結して入力する。"
 
 (advice-add 'skk-kanagaki-initialize :after
             (lambda (&rest args)
-  ;; M-x skk-restart 対策として
-  (add-hook 'skk-mode-hook 'skk-nicola-setup)
+              ;; M-x skk-restart 対策として
+              (add-hook 'skk-mode-hook 'skk-nicola-setup)
               (add-hook 'skk-mode-hook 'skk-nicola-setup-modeline)))
 
 (advice-add 'skk-insert :before
             (lambda (&rest args)
-  "送り待ち状態を管理する。"
-  (when (or (and (markerp skk-nicola-okuri-flag)
-                 (<= (point)
-                     (marker-position
-                      skk-nicola-okuri-flag)))
-            (not (eq skk-henkan-mode 'on)))
+              "送り待ち状態を管理する。"
+              (when (or (and (markerp skk-nicola-okuri-flag)
+                             (<= (point)
+                                 (marker-position
+                                  skk-nicola-okuri-flag)))
+                        (not (eq skk-henkan-mode 'on)))
                 (setq skk-nicola-okuri-flag nil))))
 
 (advice-add 'skk-kakutei :before
             (lambda (&rest args)
-  "送り待ち状態を管理する。"
-  (when (and skk-j-mode
-             (eq skk-henkan-mode 'on)
-             (markerp skk-nicola-okuri-flag))
-    ;; 確定するときは送り開始の標識を消す。
-    (skk-save-point
-     (goto-char skk-nicola-okuri-flag)
-     (when (eq ?* (following-char))
-       (delete-char 1))))
-  ;;
+              "送り待ち状態を管理する。"
+              (when (and skk-j-mode
+                         (eq skk-henkan-mode 'on)
+                         (markerp skk-nicola-okuri-flag))
+                ;; 確定するときは送り開始の標識を消す。
+                (skk-save-point
+                 (goto-char skk-nicola-okuri-flag)
+                 (when (eq ?* (following-char))
+                   (delete-char 1))))
+              ;;
               (setq skk-nicola-okuri-flag nil)))
 
 (advice-add 'skk-previous-candidate :before
             (lambda (&rest args)
-  "送り待ち状態を管理する。"
-  (when (or (and (markerp skk-nicola-okuri-flag)
-                 (<= (point)
-                     (marker-position
-                      skk-nicola-okuri-flag)))
-            (not (eq skk-henkan-mode 'on)))
+              "送り待ち状態を管理する。"
+              (when (or (and (markerp skk-nicola-okuri-flag)
+                             (<= (point)
+                                 (marker-position
+                                  skk-nicola-okuri-flag)))
+                        (not (eq skk-henkan-mode 'on)))
                 (setq skk-nicola-okuri-flag nil))))
 
 (advice-add 'skk-insert :around
             (lambda (orig-fun &rest args)
-  ;;
-  (let* ((list (symbol-value
-                (intern (format "skk-%s-plain-rule-list"
-                                skk-kanagaki-keyboard-type))))
-         (cell1 (rassoc '("、") list))
-         (cell2 (rassoc '("。") list))
-         marker)
-    (cond
-     ((and (eq skk-kanagaki-state 'kana)
-           skk-j-mode
-           (or (eq last-command-event
-                   (car cell1))
-               (eq last-command-event
-                   (car cell2)))
-           skk-henkan-mode)
-      ;; なぜかこける。原因解明中。
-      (cond
-       ((not (eq skk-henkan-mode 'active))
-        (setq marker skk-henkan-start-point)
-        (skk-kakutei)
+              ;;
+              (let* ((list (symbol-value
+                            (intern (format "skk-%s-plain-rule-list"
+                                            skk-kanagaki-keyboard-type))))
+                     (cell1 (rassoc '("、") list))
+                     (cell2 (rassoc '("。") list))
+                     marker)
+                (cond
+                 ((and (eq skk-kanagaki-state 'kana)
+                       skk-j-mode
+                       (or (eq last-command-event
+                               (car cell1))
+                           (eq last-command-event
+                               (car cell2)))
+                       skk-henkan-mode)
+                  ;; なぜかこける。原因解明中。
+                  (cond
+                   ((not (eq skk-henkan-mode 'active))
+                    (setq marker skk-henkan-start-point)
+                    (skk-kakutei)
                     (apply orig-fun args)
-        (unless (or (string= (char-to-string (char-before))
-                             (cadr cell1))
-                    (string= (char-to-string (char-before))
-                             (cadr cell2)))
-          (skk-save-point
-           (goto-char marker)
-           (skk-set-henkan-point-subr))))
-       (t
-        (skk-kakutei)
+                    (unless (or (string= (char-to-string (char-before))
+                                         (cadr cell1))
+                                (string= (char-to-string (char-before))
+                                         (cadr cell2)))
+                      (skk-save-point
+                       (goto-char marker)
+                       (skk-set-henkan-point-subr))))
+                   (t
+                    (skk-kakutei)
                     (apply orig-fun args))))
-     (t
+                 (t
                   (apply orig-fun args))))))
 
 (advice-add 'skk-isearch-setup-keymap :before
             (lambda (&rest args)
-  "親指キーでサーチが終了してしまわないようにする。"
-  (let ((keys (append skk-nicola-lshift-keys
-                      skk-nicola-rshift-keys)))
-    (while keys
+              "親指キーでサーチが終了してしまわないようにする。"
+              (let ((keys (append skk-nicola-lshift-keys
+                                  skk-nicola-rshift-keys)))
+                (while keys
                   (define-key (nth 0 args)
-        (car keys)
-        'skk-isearch-wrapper)
+                              (car keys)
+                              'skk-isearch-wrapper)
                   (setq keys (cdr keys))))))
 
 (advice-add 'isearch-char-to-string :around
             (lambda (orig-fun &rest args)
-  "エラーが出ると検索が中断して使い辛いので、黙らせる。"
-  (cond ((and skk-use-kana-keyboard
-              (featurep 'skk-isearch)
-              (with-current-buffer
-                  (get-buffer-create
-                   skk-isearch-working-buffer)
-                skk-mode))
-         (ignore-errors
+              "エラーが出ると検索が中断して使い辛いので、黙らせる。"
+              (cond ((and skk-use-kana-keyboard
+                          (featurep 'skk-isearch)
+                          (with-current-buffer
+                              (get-buffer-create
+                               skk-isearch-working-buffer)
+                            skk-mode))
+                     (ignore-errors
                        (apply orig-fun args)))
-        (t
+                    (t
                      (apply orig-fun args)))))
 
 (put 'skk-nicola-insert 'isearch-command t)
